@@ -10,7 +10,11 @@ const User = mongoose.model('users', {
         index:true,
         unique: true,
     },
-    pwd: String
+    pwd: String,
+    refresh_token_uuid:{
+        type: String,
+        unique: true
+    }
 })
 
 module.exports = { connect, User }
