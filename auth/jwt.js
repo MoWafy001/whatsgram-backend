@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken')
+const { User } = require('../db/models')
 
 
 // access token env variables
@@ -42,18 +43,31 @@ const create_refresh_token = payload => {
 
     return token
 }
-const verify_refresh_token = token => {
+
+const create_new_access_and_refresh_tokens = async old_refersh_token => {
     try {
-        const payload = jwt.verify(token, REFRESH_SECRET)
-        return payload
+        const referh_payload = jwt.verify(old_refersh_token, REFRESH_SECRET)
+
+        const user = await User.findOne({ username: referh_payload.username })
+        if (user.refresh_token_uuid !== referh_payload.refresh_token_uuid)
+            throw "invalid token"
+
+        const new_access_token = create_access_token({ username: referh_payload.username })
+        const new_refresh_token = create_refresh_token({
+            username: referh_payload.username,
+            refresh_token_uuid: user.refresh_token_uuid // the uuid of the refresh token
+        })
+
+        return [new_access_token, new_refresh_token]
+
     } catch (error) {
-        return false
+        return [null, null]
     }
 }
 
 module.exports = {
     create_access_token,
-    verify_access_token,
     create_refresh_token,
-    verify_refresh_token
+    create_new_access_and_refresh_tokens,
+    verify_access_token,
 }

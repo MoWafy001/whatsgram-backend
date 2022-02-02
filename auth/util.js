@@ -30,4 +30,16 @@ const login = async (username, pwd) => {
 
 }
 
-module.exports = { login, createAccount }
+const set_new_refresh_uuid = async username => {
+    try {
+        const user = await User.findOne({username});
+        user.refresh_token_uuid = uuidv4()
+        await user.save()
+
+        return true
+    } catch (error) {
+        return false
+    }
+}
+
+module.exports = { login, createAccount, set_new_refresh_uuid }
