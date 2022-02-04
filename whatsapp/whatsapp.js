@@ -10,7 +10,7 @@ const create_whatsapp_client = (socket, username) => {
     client.on('qr', (qr) => {
         // Generate and scan this code with your phone
         console.log('QR RECEIVED', qr);
-        socket.emit('whatsapp-qr-sent', qr)
+        socket.emit('WA-QR', qr)
     });
 
     client.on('ready', () => {
@@ -18,7 +18,7 @@ const create_whatsapp_client = (socket, username) => {
         socket.emit('whatsapp-ready', 'ready')
     });
 
-    client.initialize();
+    client.initialize().catch(_ => _);;
     return client
 }
 

@@ -167,10 +167,18 @@ app.post('/api/auth/logout', authenticate, async (req, res) => {
 
 io.on('connection', async (socket) => {
     console.log('a user connected');
-    socket.on('whatsapp-login', async username => {
+    let wa_client = null;
+    socket.on('whatsapp-login', username => {
         // init whatsapp client
-        const wa_client = create_whatsapp_client(socket, username)
-        socket.emit('whatsapp-init-started', 'hi there')
+        wa_client = create_whatsapp_client(socket, username)
+    })
+
+    socket.on('disconnect', async()=>{
+        console.log('user disconnected');
+        if(wa_client !== null) {
+            wa_client.destroy();
+            console.log('client destroied');
+        }
     })
 });
 
