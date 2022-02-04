@@ -6,7 +6,7 @@ const cors = require('cors')
 const { connect } = require('./db/models')
 const { login, createAccount, set_new_refresh_uuid } = require('./auth/util')
 const { create_access_token, create_refresh_token, create_new_access_and_refresh_tokens, verify_access_token } = require('./auth/jwt')
-
+const { create_whatsapp_client } = require('./whatsapp/whatsapp')
 
 // init
 connect(process.env.DB_URI)
@@ -14,7 +14,18 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-
+// setup socket io
+// listening
+const port = process.env.PORT || 5000
+const server = app.listen(port, () => {
+    console.log(`listening to http://127.0.0.1:${port}`);
+})
+const io = require('socket.io')(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+})
 
 // authentication middleware
 const authenticate = (req, res, next) => {
@@ -117,6 +128,10 @@ app.post('/api/auth/login', async (req, res) => {
     });
 })
 
+// login to whatsapp
+app.get('/whatsapp/login', authenticate, (req, res) => {
+
+})
 
 // refresh
 // creates new access to refersh tokens 
@@ -150,10 +165,13 @@ app.post('/api/auth/logout', authenticate, async (req, res) => {
 
 })
 
+io.on('connection', async (socket) => {
+    console.log('a user connected');
+    socket.on('whatsapp-login', async username => {
+        // init whatsapp client
+        const wa_client = create_whatsapp_client(socket, username)
+        socket.emit('whatsapp-init-started', 'hi there')
+    })
+});
 
 
-// listening
-const port = process.env.PORT || 5000
-app.listen(port, () => {
-    console.log(`listening to http://127.0.0.1:${port}`);
-})
