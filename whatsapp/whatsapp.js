@@ -18,7 +18,7 @@ const create_whatsapp_client = (socket, username) => {
         socket.emit('whatsapp-ready', 'ready')
     });
 
-    client.initialize().catch(_ => _);;
+    client.initialize().catch(_ => _);
     return client
 }
 

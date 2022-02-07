@@ -170,15 +170,40 @@ io.on('connection', async (socket) => {
     let wa_client = null;
     socket.on('whatsapp-login', username => {
         // init whatsapp client
+        console.log('trying to login');
         wa_client = create_whatsapp_client(socket, username)
     })
 
-    socket.on('disconnect', async()=>{
+    socket.on('disconnect', async () => {
         console.log('user disconnected');
-        if(wa_client !== null) {
+        if (wa_client !== null) {
             wa_client.destroy();
             console.log('client destroied');
         }
+    })
+
+    socket.on('wa get chats', async () => {
+        console.log('chats requested');
+        let chats = await wa_client.getChats()
+
+        chats = chats.splice(0, 10);
+        chats = await Promise.all(chats.map(async c => {
+
+            const last_message = (await c.fetchMessages({ limit: 1 }))[0];
+            console.log(last_message);
+            const contact = await c.getContact();
+
+            return {
+                name: c.name,
+                last_message: {body: last_message.body, ack: last_message.ack},
+                img: await contact.getProfilePicUrl().catch(_ => ''),
+            }
+        }
+        ))
+
+        console.log(chats);
+        socket.emit('wa chats sent', chats)
+        console.log('chats sent');
     })
 });
 
