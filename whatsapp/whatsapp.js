@@ -7,7 +7,7 @@ const { Client } = require('whatsapp-web.js');
 const create_whatsapp_client = (socket, username) => {
     const client = new Client({
         puppeteer: {
-            headless: false,
+            headless: true,
             args: ['--no-sandbox']
         },
         clientId: username

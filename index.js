@@ -192,7 +192,6 @@ io.on('connection', async (socket) => {
 
             const last_message = (await c.fetchMessages({ limit: 1 }))[0];
             const contact = await c.getContact();
-            console.log(c.id);
             return {
                 ...c,
                 last_message: last_message !== undefined ? {
@@ -207,9 +206,10 @@ io.on('connection', async (socket) => {
         socket.emit('wa chats sent', chats)
     })
 
-    socket.on('wa chat selected', async chat_id => {
+    socket.on('wa chat selected', async ({chat_id, limit}) => {
+        console.log(`${chat_id} requested`);
         const chat = await wa_client.getChatById(chat_id);
-        const messages = await chat.fetchMessages({limit:50})
+        const messages = await chat.fetchMessages({limit:limit})
         socket.emit('wa chat messages', messages)
     })
 });
