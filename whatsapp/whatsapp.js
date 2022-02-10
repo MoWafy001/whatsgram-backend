@@ -5,7 +5,14 @@ const { Client } = require('whatsapp-web.js');
 
 
 const create_whatsapp_client = (socket, username) => {
-    const client = new Client({clientId: username});
+    const client = new Client({
+        puppeteer: {
+            headless: false,
+            args: ['--no-sandbox']
+        },
+        clientId: username
+    });
+    console.log("client created");
 
     client.on('qr', (qr) => {
         // Generate and scan this code with your phone
@@ -18,7 +25,15 @@ const create_whatsapp_client = (socket, username) => {
         socket.emit('whatsapp-ready', 'ready')
     });
 
-    client.initialize().catch(_ => _);
+    client.on('auth_failure', (message) => {
+        console.log(message);
+        console.log('auth failed');
+    })
+
+
+    client.initialize()
+        .catch(e => console.log(e));
+    console.log('started initialization');
     return client
 }
 

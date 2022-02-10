@@ -170,6 +170,7 @@ io.on('connection', async (socket) => {
     let wa_client = null;
     socket.on('whatsapp-login', username => {
         // init whatsapp client
+        console.log(username);
         console.log('trying to login');
         wa_client = create_whatsapp_client(socket, username)
     })
@@ -182,28 +183,34 @@ io.on('connection', async (socket) => {
         }
     })
 
-    socket.on('wa get chats', async () => {
+    socket.on('wa get chats', async ({ offset, limit }) => {
         console.log('chats requested');
         let chats = await wa_client.getChats()
+        chats = chats.slice(offset, offset + limit);
 
-        chats = chats.splice(0, 10);
         chats = await Promise.all(chats.map(async c => {
 
             const last_message = (await c.fetchMessages({ limit: 1 }))[0];
-            console.log(last_message);
             const contact = await c.getContact();
-
+            console.log(c.id);
             return {
-                name: c.name,
-                last_message: {body: last_message.body, ack: last_message.ack},
+                ...c,
+                last_message: last_message !== undefined ? {
+                    ...last_message,
+                    type: last_message.type === 'ptt' ? 'recording' : last_message.type
+                } : null,
                 img: await contact.getProfilePicUrl().catch(_ => ''),
             }
         }
         ))
 
-        console.log(chats);
         socket.emit('wa chats sent', chats)
-        console.log('chats sent');
+    })
+
+    socket.on('wa chat selected', async chat_id => {
+        const chat = await wa_client.getChatById(chat_id);
+        const messages = await chat.fetchMessages({limit:50})
+        socket.emit('wa chat messages', messages)
     })
 });
 
