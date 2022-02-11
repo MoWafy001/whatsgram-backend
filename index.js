@@ -209,8 +209,18 @@ io.on('connection', async (socket) => {
     socket.on('wa chat selected', async ({chat_id, limit}) => {
         console.log(`${chat_id} requested`);
         const chat = await wa_client.getChatById(chat_id);
+        const contact = await chat.getContact();
+        contact.img = await contact.getProfilePicUrl().catch(_ => '');
+        console.log(contact.img);
         const messages = await chat.fetchMessages({limit:limit})
-        socket.emit('wa chat messages', messages)
+
+        const data = {
+            messages,
+            chat_id,
+            contact,
+        }
+
+        socket.emit('wa chat messages', data)
     })
 });
 
