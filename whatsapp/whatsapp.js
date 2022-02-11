@@ -1,8 +1,6 @@
 // whatsapp api
 const { Client } = require('whatsapp-web.js');
-
-
-
+const { handel_whatsapp_socket } = require('./socket')
 
 const create_whatsapp_client = (socket, username) => {
     const client = new Client({
@@ -22,7 +20,7 @@ const create_whatsapp_client = (socket, username) => {
 
     client.on('ready', () => {
         console.log('Client is ready!');
-        socket.emit('whatsapp-ready', 'ready')
+        socket.emit('whatsapp-ready')
     });
 
     client.on('auth_failure', (message) => {
@@ -34,6 +32,9 @@ const create_whatsapp_client = (socket, username) => {
     client.initialize()
         .catch(e => console.log(e));
     console.log('started initialization');
+
+    handel_whatsapp_socket(client, socket)
+
     return client
 }
 

@@ -166,7 +166,7 @@ app.post('/api/auth/logout', authenticate, async (req, res) => {
 })
 
 io.on('connection', async (socket) => {
-    console.log('a user connected');
+    console.log('user connected');
     let wa_client = null;
     socket.on('whatsapp-login', username => {
         // init whatsapp client
@@ -175,52 +175,11 @@ io.on('connection', async (socket) => {
         wa_client = create_whatsapp_client(socket, username)
     })
 
-    socket.on('disconnect', async () => {
-        console.log('user disconnected');
-        if (wa_client !== null) {
+    socket.on('disconnect', () => {
+        if (wa_client) {
             wa_client.destroy();
-            console.log('client destroied');
+            console.log('client destoried');
         }
-    })
-
-    socket.on('wa get chats', async ({ offset, limit }) => {
-        console.log('chats requested');
-        let chats = await wa_client.getChats()
-        chats = chats.slice(offset, offset + limit);
-
-        chats = await Promise.all(chats.map(async c => {
-
-            const last_message = (await c.fetchMessages({ limit: 1 }))[0];
-            const contact = await c.getContact();
-            return {
-                ...c,
-                last_message: last_message !== undefined ? {
-                    ...last_message,
-                    type: last_message.type === 'ptt' ? 'recording' : last_message.type
-                } : null,
-                img: await contact.getProfilePicUrl().catch(_ => ''),
-            }
-        }
-        ))
-
-        socket.emit('wa chats sent', chats)
-    })
-
-    socket.on('wa chat selected', async ({chat_id, limit}) => {
-        console.log(`${chat_id} requested`);
-        const chat = await wa_client.getChatById(chat_id);
-        const contact = await chat.getContact();
-        contact.img = await contact.getProfilePicUrl().catch(_ => '');
-        console.log(contact.img);
-        const messages = await chat.fetchMessages({limit:limit})
-
-        const data = {
-            messages,
-            chat_id,
-            contact,
-        }
-
-        socket.emit('wa chat messages', data)
     })
 });
 
