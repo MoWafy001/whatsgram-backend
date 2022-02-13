@@ -25,7 +25,7 @@ const handel_request_chat_messages = (client, socket) => {
         let chat = await client.getChatById(chat_id);
         let messages = await chat.fetchMessages({ limit: 100 });
         messages = await Promise.all(messages.map(async m => {
-            if(m.type === 'sticker' || m.type == 'image')
+            if(m.hasMedia)
                 m.media = await m.downloadMedia()
 
             return m
