@@ -1,11 +1,12 @@
 // whatsapp api
 const { Client } = require('whatsapp-web.js');
 const { handel_whatsapp_socket } = require('./socket')
+const {handel_message_create} = require('./socket_util')
 
 const create_whatsapp_client = (socket, username) => {
     const client = new Client({
         puppeteer: {
-            headless: true,
+            headless: false,
             args: ['--no-sandbox']
         },
         clientId: username
@@ -27,6 +28,8 @@ const create_whatsapp_client = (socket, username) => {
         console.log(message);
         console.log('auth failed');
     })
+
+    client.on('message_create', handel_message_create(client, socket))
 
 
     client.initialize()
