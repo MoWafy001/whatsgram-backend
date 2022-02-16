@@ -1,3 +1,5 @@
+const {MessageMedia} = require('whatsapp-web.js')
+
 // getting the list of chats
 const handel_request_chats = (client, socket) => {
     return async () => {
@@ -68,6 +70,14 @@ const handel_send_text = (client) => {
     }
 }
 
+const handel_send_image = (client) => {
+    return ({ img_data, chat }) => {
+        const mime = img_data.split(',')[0].split(':')[1]
+        const data = img_data.split(',')[1]
+        const media = new MessageMedia(mime, data, 'image')
+        client.sendMessage(chat.id._serialized, media)
+    }
+}
 
 // exports
 module.exports = {
@@ -75,4 +85,5 @@ module.exports = {
     handel_request_chat_messages,
     handel_message_create,
     handel_send_text,
+    handel_send_image,
 }
