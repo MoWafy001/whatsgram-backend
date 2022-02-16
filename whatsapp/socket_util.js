@@ -25,6 +25,8 @@ const handel_request_chat_messages = (client, socket) => {
         let chat = await client.getChatById(chat_id);
         let messages = await chat.fetchMessages({ limit: 100 });
         messages = await Promise.all(messages.map(async m => {
+            m.contact = await m.getContact()
+
             if(m.hasMedia){
                 m.media = await m.downloadMedia()
                 if(m.media === undefined || m.media === null)
@@ -44,6 +46,8 @@ const handel_message_create = (client, socket) => {
     return async message => {
         const chat = await message.getChat()
         console.log('message received');
+
+        message.contact = await message.getContact()
 
         if(message.hasMedia){
                 message.media = await message.downloadMedia()
