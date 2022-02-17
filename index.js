@@ -2,17 +2,20 @@ require('dotenv').config();
 const express = require('express')
 const cors = require('cors')
 
+
 // util
 const { connect } = require('./db/models')
 const { login, createAccount, set_new_refresh_uuid } = require('./auth/util')
 const { create_access_token, create_refresh_token, create_new_access_and_refresh_tokens, verify_access_token } = require('./auth/jwt')
 const { create_whatsapp_client } = require('./whatsapp/whatsapp')
 
+
 // init
 connect(process.env.DB_URI)
 const app = express()
 app.use(cors())
 app.use(express.json())
+
 
 // setup socket io
 // listening
@@ -26,6 +29,29 @@ const io = require('socket.io')(server, {
         methods: ["GET", "POST"]
     }
 })
+
+
+/* 
+[
+    {
+        username,
+        wa_client,
+        timeout,
+    }
+]
+*/
+var wa_clients_online = []
+
+
+
+
+
+
+
+
+
+
+
 
 // authentication middleware
 const authenticate = (req, res, next) => {
@@ -165,6 +191,20 @@ app.post('/api/auth/logout', authenticate, async (req, res) => {
 
 })
 
+const removeTimeout = username => {
+    return () => {
+        wa_clients_online = wa_clients_online.map(c => {
+            if (c.username === username) {
+                const t = c.timeout
+                c.timeout = null
+                if (t)
+                    clearTimeout(t)
+            }
+            return c
+        })
+    }
+}
+
 io.on('connection', async (socket) => {
     console.log('user connected');
     let wa_client = null;
@@ -172,13 +212,39 @@ io.on('connection', async (socket) => {
         // init whatsapp client
         console.log(username);
         console.log('trying to login');
-        wa_client = create_whatsapp_client(socket, username)
+
+        // see if the client is already online
+        cl = wa_clients_online.find(c => c.username === username)
+
+        wa_client = create_whatsapp_client(socket, username, removeTimeout(username), cl)
+
+        // if it doesn't exist
+        if (cl === undefined || cl== null) {
+            wa_clients_online.push({
+                username,
+                wa_client,
+                timeout: null
+            })
+        }
     })
 
+    // on disconnect
     socket.on('disconnect', () => {
-        if (wa_client) {
-            wa_client.destroy();
-            console.log('client destoried');
+        if (wa_client !== null) {
+            const cl = wa_clients_online.find(c => c.wa_client = wa_client)
+            if (cl === undefined || cl === null) return
+
+            const t = setTimeout(() => {
+                wa_client.destroy()
+                console.log('client destroied');
+                wa_clients_online = wa_clients_online.filter(c => c.wa_client === wa_client)
+            }, 1000 * 60 * 60) // runs after an hour
+
+            wa_clients_online = wa_clients_online.map(c => {
+                if (c === wa_client)
+                    c.timeout = t
+                return c
+            })
         }
     })
 });

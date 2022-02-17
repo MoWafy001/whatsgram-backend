@@ -1,16 +1,23 @@
 // whatsapp api
+const e = require('cors');
 const { Client } = require('whatsapp-web.js');
 const { handel_whatsapp_socket } = require('./socket')
-const {handel_message_create} = require('./socket_util')
+const { handel_message_create } = require('./socket_util')
 
-const create_whatsapp_client = (socket, username) => {
-    const client = new Client({
-        puppeteer: {
-            headless: false,
-            args: ['--no-sandbox']
-        },
-        clientId: username
-    });
+const create_whatsapp_client = (socket, username, removeTimeout, cl) => {
+    let client;
+
+    if (cl === undefined || cl === null)
+        client = new Client({
+            puppeteer: {
+                headless: false,
+                args: ['--no-sandbox']
+            },
+            clientId: username
+        });
+    else
+        client = cl.wa_client
+
     console.log("client created");
 
     client.on('qr', (qr) => {
@@ -32,11 +39,13 @@ const create_whatsapp_client = (socket, username) => {
     client.on('message_create', handel_message_create(client, socket))
 
 
-    client.initialize()
-        .catch(e => console.log(e));
-    console.log('started initialization');
+    if (cl === undefined || cl === null) {
+        client.initialize()
+            .catch(e => console.log(e));
+        console.log('started initialization');
+    }else socket.emit('whatsapp-ready')
 
-    handel_whatsapp_socket(client, socket)
+    handel_whatsapp_socket(client, socket, removeTimeout)
 
     return client
 }

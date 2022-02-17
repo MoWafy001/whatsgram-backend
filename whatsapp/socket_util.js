@@ -1,8 +1,9 @@
 const {MessageMedia} = require('whatsapp-web.js')
 
 // getting the list of chats
-const handel_request_chats = (client, socket) => {
+const handel_request_chats = (client, socket, removeTimeout) => {
     return async () => {
+        removeTimeout()
         let chats = await client.getChats();
         chats = await Promise.all(chats.map(async chat => {
             const chat_contact = await chat.getContact();
