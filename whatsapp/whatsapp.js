@@ -10,8 +10,13 @@ const create_whatsapp_client = (socket, username, removeTimeout, cl) => {
     if (cl === undefined || cl === null)
         client = new Client({
             puppeteer: {
-                headless: false,
-                args: ['--no-sandbox']
+                headless: true,
+                args: [
+                    "--disable-gpu",
+                    "--disable-dev-shm-usage",
+                    "--disable-setuid-sandbox",
+                    "--no-sandbox", '--no-sandbox'
+                ]
             },
             clientId: username
         });
@@ -43,7 +48,7 @@ const create_whatsapp_client = (socket, username, removeTimeout, cl) => {
         client.initialize()
             .catch(e => console.log(e));
         console.log('started initialization');
-    }else socket.emit('whatsapp-ready')
+    } else socket.emit('whatsapp-ready')
 
     handel_whatsapp_socket(client, socket, removeTimeout)
 

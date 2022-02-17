@@ -77,6 +77,13 @@ const authenticate = (req, res, next) => {
 /*
 endpoints
 */
+
+app.use(express.static('build'))
+
+app.get('/', (req, res)=>{
+    res.render('index.html')
+})
+
 // create account
 app.post('/api/auth/register', async (req, res) => {
     const { username, pwd } = req.body;
